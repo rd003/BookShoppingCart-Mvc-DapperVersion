@@ -3,7 +3,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BookShoppingCartMvcUI.Models
 {
-    [Table("ShoppingCart")]
     public class ShoppingCart
     {
         public int Id { get; set; }
@@ -12,6 +11,6 @@ namespace BookShoppingCartMvcUI.Models
         public bool IsDeleted { get; set; } = false;
 
         public ICollection<CartDetail> CartDetails { get; set; }
-        
+
     }
 }

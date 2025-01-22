@@ -1,0 +1,32 @@
+# Top-most EditorConfig file
+root = true
+
+# C# files
+[*.cs]
+
+# Indentation preferences
+indent_style = space
+indent_size = 4
+
+# New line preferences
+end_of_line = crlf
+insert_final_newline = true
+
+# Fluent API formatting
+csharp_new_line_before_members_in_object_initializers = true
+csharp_new_line_before_open_brace = all
+csharp_preserve_single_line_statements = false
+
+# Dot notation formatting
+dotnet_style_qualification_for_field = false:suggestion
+dotnet_style_qualification_for_property = false:suggestion
+dotnet_style_qualification_for_method = false:suggestion
+dotnet_style_qualification_for_event = false:suggestion
+
+# Alignment for fluent API calls
+csharp_align_multiline_calls_chain = true
+csharp_space_after_dot = false
+csharp_space_before_dot = false
+
+# Indentation for chained method calls
+csharp_indent_method_chain = true

@@ -2,7 +2,6 @@
 
 namespace BookShoppingCartMvcUI.Models
 {
-    [Table("Stock")]
     public class Stock
     {
         public int Id { get; set; }

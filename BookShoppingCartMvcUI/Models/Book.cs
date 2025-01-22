@@ -3,7 +3,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BookShoppingCartMvcUI.Models
 {
-    [Table("Book")]
     public class Book
     {
         public int Id { get; set; }
@@ -15,9 +14,12 @@ namespace BookShoppingCartMvcUI.Models
         [Required]
         [MaxLength(40)]
         public string? AuthorName { get; set; }
+
         [Required]
         public double Price { get; set; }
+
         public string? Image { get; set; }
+
         [Required]
         public int GenreId { get; set; }
         public Genre Genre { get; set; }
