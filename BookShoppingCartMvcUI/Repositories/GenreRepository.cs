@@ -1,4 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Data;
+using Dapper;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 
 namespace BookShoppingCartMvcUI.Repositories;
 
@@ -12,38 +15,74 @@ public interface IGenreRepository
 }
 public class GenreRepository : IGenreRepository
 {
-    private readonly ApplicationDbContext _context;
-    public GenreRepository(ApplicationDbContext context)
+    private readonly IConfiguration _config;
+    private readonly string _connectionString;
+
+    public GenreRepository(IConfiguration configuration)
     {
-        _context = context;
+        _config = configuration;
+        _connectionString = _config.GetConnectionString("DefaultConnection");
     }
 
     public async Task AddGenre(Genre genre)
     {
-        _context.Genres.Add(genre);
-        await _context.SaveChangesAsync();
+        IDbConnection connection = new SqlConnection(_connectionString);
+        string query = @"
+            INSERT INTO Genre (GenreName)
+            VALUES (@GenreName);
+         ";
+        await connection.ExecuteAsync(query, genre);
     }
     public async Task UpdateGenre(Genre genre)
     {
-        _context.Genres.Update(genre);
-        await _context.SaveChangesAsync();
+        IDbConnection connection = new SqlConnection(_connectionString);
+        string query = @"
+          UPDATE Genre 
+          SET GenreName= @GenreName
+          WHERE Id= @Id;
+        ";
+        await connection.ExecuteAsync(query, genre);
     }
 
     public async Task DeleteGenre(Genre genre)
     {
-        _context.Genres.Remove(genre);
-        await _context.SaveChangesAsync();
+        IDbConnection connection = new SqlConnection(_connectionString);
+        string query = @"
+         DELETE FROM Genre
+         WHERE Id = @Id;
+        ";
+        await connection.ExecuteAsync(query, new { genre.Id });
     }
 
     public async Task<Genre?> GetGenreById(int id)
     {
-        return await _context.Genres.FindAsync(id);
+        IDbConnection connection = new SqlConnection(_connectionString);
+        string query = @"
+          select
+           g.Id,
+           g.GenreName 
+          from Genre g
+          where Id=@id;
+        ";
+
+        Genre? genre = await connection.QueryFirstOrDefaultAsync<Genre>(query, new { id });
+        return genre;
     }
 
     public async Task<IEnumerable<Genre>> GetGenres()
     {
-        return await _context.Genres.ToListAsync();
+        IDbConnection connection = new SqlConnection(_connectionString);
+        string query = @"
+            select 
+              g.Id,
+              g.GenreName
+            from Genre g
+            order by 
+              g.GenreName asc;  
+        ";
+        IEnumerable<Genre> genres = await connection.QueryAsync<Genre>(query);
+        return genres;
     }
 
-    
+
 }

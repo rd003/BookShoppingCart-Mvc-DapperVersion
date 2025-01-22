@@ -1,4 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Data;
+using Dapper;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 
 namespace BookShoppingCartMvcUI.Repositories
 {
@@ -13,22 +16,38 @@ namespace BookShoppingCartMvcUI.Repositories
 
     public class BookRepository : IBookRepository
     {
-        private readonly ApplicationDbContext _context;
-        public BookRepository(ApplicationDbContext context)
+        private readonly IConfiguration _config;
+        private readonly string _constr;
+        public BookRepository(IConfiguration config)
         {
-            _context = context;
+            _config = config;
+            _constr = _config.GetConnectionString("DefaultConnection");
         }
 
         public async Task AddBook(Book book)
         {
-            _context.Books.Add(book);
-            await _context.SaveChangesAsync();
+            IDbConnection connection = new SqlConnection(_constr);
+            string sql = @"
+                insert into
+                Book (BookName,AuthorName,Price,Image,GenreId)
+                values (@BookName,@AuthorName,@Price,@Image,@GenreId);
+            ";
+            await connection.ExecuteAsync(sql);
         }
 
         public async Task UpdateBook(Book book)
         {
-            _context.Books.Update(book);
-            await _context.SaveChangesAsync();
+            IDbConnection connection = new SqlConnection(_constr);
+            string sql = @"
+               update Book
+               set 
+                BookName=@BookName,
+                AuthorName=@AuthorName,
+                Price=@Price,
+                Image=@Image,
+                GenreId=@GenreId
+            ";
+            await connection.ExecuteAsync(sql, book);
         }
 
         public async Task DeleteBook(Book book)
@@ -39,6 +58,6 @@ namespace BookShoppingCartMvcUI.Repositories
 
         public async Task<Book?> GetBookById(int id) => await _context.Books.FindAsync(id);
 
-        public async Task<IEnumerable<Book>> GetBooks() => await _context.Books.Include(a=>a.Genre).ToListAsync();
+        public async Task<IEnumerable<Book>> GetBooks() => await _context.Books.Include(a => a.Genre).ToListAsync();
     }
 }
