@@ -29,12 +29,12 @@
                     }
                     else
                     {
-                        <img src="/images/@book.Image" style="width:80px;height:100px" alt="book image" />
+                        <img src="/Images/@book.Image" style="width:80px;height:100px" alt="book image" />
                     }
                 </td>
                 <td>@book.BookName</td>
                 <td>@book.AuthorName</td>
-                <td>@book.Genre.GenreName</td>
+                <td>@book.GenreName</td>
                 <td>@book.Price</td>
                 <td>
                     <a asp-action="UpdateBook" asp-controller="Book" asp-route-id="@book.Id" class="btn btn-success">Edit</a>
