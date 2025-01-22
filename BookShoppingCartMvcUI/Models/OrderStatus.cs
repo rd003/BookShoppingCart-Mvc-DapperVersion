@@ -9,5 +9,7 @@ namespace BookShoppingCartMvcUI.Models
         public int StatusId { get; set; }
         [Required, MaxLength(20)]
         public string? StatusName { get; set; }
+
+        public ICollection<Order> Orders { get; set; } = [];
     }
 }

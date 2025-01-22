@@ -9,5 +9,9 @@ public class GenreConfiguration : IEntityTypeConfiguration<Genre>
     {
         builder.ToTable("Genre")
                .HasIndex(g => g.GenreName);
+
+        builder.HasKey(k => k.Id)
+               .HasName("PK_Genre_Id");
+
     }
 }

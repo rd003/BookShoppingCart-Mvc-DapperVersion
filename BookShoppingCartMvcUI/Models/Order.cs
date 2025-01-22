@@ -6,7 +6,7 @@ namespace BookShoppingCartMvcUI.Models
     {
         public int Id { get; set; }
         [Required]
-        public string UserId { get; set; }
+        public string UserId { get; set; } = string.Empty;
         public DateTime CreateDate { get; set; } = DateTime.UtcNow;
         [Required]
         public int OrderStatusId { get; set; }

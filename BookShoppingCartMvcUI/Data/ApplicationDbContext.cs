@@ -14,11 +14,9 @@ namespace BookShoppingCartMvcUI.Data
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
-
-            builder.Entity<OrderStatus>().ToTable("OrderStatus");
-            builder.Entity<ShoppingCart>().ToTable("ShoppingCart");
-            builder.Entity<Stock>().ToTable("Stock");
-
+            builder.ApplyConfiguration(new StockConfiguration());
+            builder.ApplyConfiguration(new ShoppingCartConfiguration());
+            builder.ApplyConfiguration(new OrderStatusConfiguration());
             builder.ApplyConfiguration(new GenreConfiguration());
             builder.ApplyConfiguration(new BookConfiguration());
             builder.ApplyConfiguration(new OrderConfiguration());

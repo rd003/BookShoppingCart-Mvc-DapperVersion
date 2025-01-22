@@ -28,5 +28,18 @@ public class BookConfiguration : IEntityTypeConfiguration<Book>
 
         builder.HasIndex(e => e.GenreId)
                .HasDatabaseName("IX_Book_GenreId");
+
+        builder.HasKey(k => k.Id)
+               .HasName("PK_Book_Id");
+
+        builder.Ignore(p => p.Quantity);
+        builder.Ignore(p => p.GenreName);
+
+        builder.HasOne(x => x.Genre)
+               .WithMany(x => x.Books)
+               .HasForeignKey(x => x.GenreId)
+               .HasConstraintName("FK_Book_Genre_GenreId")
+               .OnDelete(DeleteBehavior.Restrict);
+
     }
 }
