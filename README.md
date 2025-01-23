@@ -6,18 +6,18 @@ It is a source code of the youtube tutorial on [book shopping cart in .net core 
 
 ## Tech stack 🧑‍💻
 
-   - Dotnet core mvc (.Net 9)
-   - MS SQLServer 2022 (Database)
-   - Entity Framework Core (ORM)
-   - Identity Core (Authentication)
-   - Bootstrap 5 (frontend)
+- Dotnet core mvc (.Net 9)
+- MS SQLServer 2022 (Database)
+- Entity Framework Core (ORM)
+- Identity Core (Authentication)
+- Bootstrap 5 (frontend)
 
 ## Tools I have used and their alternative
 
 - Visual Studio 2022 (Alternatives (.NET SDK + VS Code or .NET SDK + JetBrains Rider)
 - Microsoft Sql Server Management Studio (Alternative Azure data studio or you can just execute sql from terminal)
 
-Note: Every tool and tech is free for personal use. 
+Note: Every tool and tech is free for personal use.
 
 ## Video tutorial 📺
 
@@ -48,6 +48,10 @@ git clone https://github.com/rd003/BookShoppingCart-Mvc
 - It will generate the database
 - It will seed some data
 - It will create an account for `admin`
+
+## Nex Step: Execute this database script
+
+You need to run these scripts to create stored procedures. For that you need to follow this [sql script](./store-procedures.sql).
 
 ## How to logged-in with admin account?? 🧑‍💻🧑‍💻
 

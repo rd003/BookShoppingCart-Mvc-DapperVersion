@@ -1,3 +1,6 @@
+Use BookShoppingCartMvc_Dapper;
+GO
+
 -- top n selling books
 
 CREATE OR ALTER PROCEDURE [dbo].[Usp_GetTopNSellingBooksByDate]
@@ -19,4 +22,6 @@ CREATE OR ALTER PROCEDURE [dbo].[Usp_GetTopNSellingBooksByDate]
         FROM UnitSold us
         JOIN [Book] b ON us.BookId = b.Id
         ORDER BY us.TotalUnitSold DESC;
-    END
+    END;
+
+GO
