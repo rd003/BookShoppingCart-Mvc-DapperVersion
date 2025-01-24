@@ -53,31 +53,32 @@ public class DbSeeder
             }
 
 
-            if (!context.Genres.Any())
-            {
-                await SeedGenreAsync(context);
-            }
+            // if (!context.Genres.Any())
+            // {
+            //     await SeedGenreAsync(context);
+            // }
 
-            if (!context.Books.Any())
-            {
-                await SeedBooksAsync(context);
-                // update stock table
-                await context.Database.ExecuteSqlRawAsync(@"
-                     INSERT INTO Stock(BookId,Quantity) 
-                     SELECT 
-                     b.Id,
-                     10 
-                     FROM Book b
-                     WHERE NOT EXISTS (
-                     SELECT * FROM [Order]
-                     );
-           ");
-            }
+            // if (!context.Books.Any())
+            // {
+            //     await SeedBooksAsync(context);
 
-            if (!context.orderStatuses.Any())
-            {
-                await SeedOrderStatusAsync(context);
-            }
+            //     // setting stock's value 10 for every book
+            //     await context.Database.ExecuteSqlRawAsync(@"
+            //              INSERT INTO Stock(BookId,Quantity) 
+            //              SELECT 
+            //              b.Id,
+            //              10 
+            //              FROM Book b
+            //              WHERE NOT EXISTS (
+            //              SELECT * FROM [Stock]
+            //              );
+            //    ");
+            // }
+
+            // if (!context.orderStatuses.Any())
+            // {
+            //     await SeedOrderStatusAsync(context);
+            // }
 
         }
         catch (Exception ex)
@@ -90,6 +91,14 @@ public class DbSeeder
 
     private static async Task SeedGenreAsync(ApplicationDbContext context)
     {
+        // remove if any existing genres
+        var existingGenres = await context.Genres.ToListAsync();
+        Console.WriteLine("Existing Genres:");
+        foreach (var genre in existingGenres)
+        {
+            Console.WriteLine($"ID: {genre.Id}, Name: {genre.GenreName}");
+        }
+
         var genres = new[]
          {
             new Genre { GenreName = "Romance" },
@@ -116,12 +125,13 @@ public class DbSeeder
             new OrderStatus { StatusId = 6, StatusName = "Refund" }
         };
 
-        await context.orderStatuses.AddRangeAsync(orderStatuses);
+        context.orderStatuses.AddRange(orderStatuses);
         await context.SaveChangesAsync();
     }
 
     private static async Task SeedBooksAsync(ApplicationDbContext context)
     {
+
         var books = new List<Book>
         {
             // Romance Books (GenreId = 1)
@@ -167,7 +177,7 @@ public class DbSeeder
             new Book { BookName = "Head First Design Patterns", AuthorName = "Eric Freeman", Price = 20.99, GenreId = 6 }
         };
 
-        await context.Books.AddRangeAsync(books);
+        context.Books.AddRange(books);
         await context.SaveChangesAsync();
     }
 

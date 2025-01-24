@@ -53,6 +53,8 @@ git clone https://github.com/rd003/BookShoppingCart-Mvc
 
 You need to run these scripts to create stored procedures. For that you need to follow this [sql script](./store-procedures.sql).
 
+You also need to run this [script](./script.sql) to seed data.
+
 ## How to logged-in with admin account?? 🧑‍💻🧑‍💻
 
 Click on the link named `login` and get logged-in with these credentials.

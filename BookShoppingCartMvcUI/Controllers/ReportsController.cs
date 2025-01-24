@@ -16,14 +16,14 @@ public class ReportsController : Controller
             // by default, get last 7 days record
             DateTime startDate = sDate ?? DateTime.UtcNow.AddDays(-7);
             DateTime endDate = eDate ?? DateTime.UtcNow;
-            var topFiveSellingBooks = await _reportRepository.GetTopNSellingBooksByDate(startDate, endDate);
+            var topFiveSellingBooks = await _reportRepository.GetTopNSellingBooksByDate(startDate, endDate, 5);
             var vm = new TopNSoldBooksVm(startDate, endDate, topFiveSellingBooks);
             return View(vm);
         }
         catch (Exception ex)
         {
             TempData["errorMessage"] = "Something went wrong";
-            return RedirectToAction("Index", "Home");
+            return View();
         }
     }
 }

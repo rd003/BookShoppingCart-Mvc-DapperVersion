@@ -1,52 +1,48 @@
-﻿
-
+﻿using System.Data;
+using Dapper;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
-namespace BookShoppingCartMvcUI.Repositories
+namespace BookShoppingCartMvcUI.Repositories;
+
+public class HomeRepository : IHomeRepository
 {
-    public class HomeRepository : IHomeRepository
+    private readonly IConfiguration _config;
+    private readonly string constr;
+
+    public HomeRepository(IConfiguration config)
     {
-        private readonly ApplicationDbContext _db;
+        _config = config;
+        constr = _config.GetConnectionString("DefaultConnection");
+    }
 
-        public HomeRepository(ApplicationDbContext db)
-        {
-            _db = db;
-        }
+    public async Task<IEnumerable<Book>> GetBooks(string sTerm = "", int genreId = 0)
+    {
+        sTerm = sTerm.ToLower();
 
-        public async Task<IEnumerable<Genre>> Genres()
-        {
-            return await _db.Genres.ToListAsync();
-        }
-        public async Task<IEnumerable<Book>> GetBooks(string sTerm = "", int genreId = 0)
-        {
-            sTerm = sTerm.ToLower();
-            IEnumerable<Book> books = await (from book in _db.Books
-                         join genre in _db.Genres
-                         on book.GenreId equals genre.Id
-                         join stock in _db.Stocks
-                         on book.Id equals stock.BookId
-                         into book_stocks
-                         from bookWithStock in book_stocks.DefaultIfEmpty()
-                         where string.IsNullOrWhiteSpace(sTerm) || (book != null && book.BookName.ToLower().StartsWith(sTerm))
-                         select new Book
-                         {
-                             Id = book.Id,
-                             Image = book.Image,
-                             AuthorName = book.AuthorName,
-                             BookName = book.BookName,
-                             GenreId = book.GenreId,
-                             Price = book.Price,
-                             GenreName = genre.GenreName,
-                             Quantity=bookWithStock==null? 0:bookWithStock.Quantity
-                         }
-                         ).ToListAsync();
-            if (genreId > 0)
-            {
+        IDbConnection conn = new SqlConnection(constr);
 
-                books = books.Where(a => a.GenreId == genreId).ToList();
-            }
-            return books;
+        string sql = @"SELECT
+                            b.Id,
+                            b.[Image],
+                            b.AuthorName,
+                            b.BookName,
+                            b.GenreId,
+                            b.Price,
+                            g.GenreName,
+                            COALESCE(s.Quantity,0) as Quantity
+                        FROM Book b
+                            inner join Genre g
+                            on b.GenreId = g.Id
+                            left outer join Stock s
+                            on b.Id = s.Id
+                        Where 
+                            (@search_term = '' OR b.BookName LIKE @search_term + '%')
+                            AND (@genre_id = 0 OR b.GenreId = @genre_id) 
+                        ORDER BY b.BookName ASC
+                    ";
+        IEnumerable<Book> books = await conn.QueryAsync<Book>(sql, new { genre_id = genreId, search_term = sTerm });
+        return books;
 
-        }
     }
 }
