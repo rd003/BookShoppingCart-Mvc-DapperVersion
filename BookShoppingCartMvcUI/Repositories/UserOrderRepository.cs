@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using System.Data;
+using Dapper;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace BookShoppingCartMvcUI.Repositories
@@ -9,25 +12,43 @@ namespace BookShoppingCartMvcUI.Repositories
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly UserManager<IdentityUser> _userManager;
 
+        private readonly IConfiguration _config;
+        private readonly string _constr;
+
 
         public UserOrderRepository(ApplicationDbContext db,
             UserManager<IdentityUser> userManager,
-             IHttpContextAccessor httpContextAccessor)
+             IHttpContextAccessor httpContextAccessor,
+             IConfiguration config)
         {
             _db = db;
             _httpContextAccessor = httpContextAccessor;
             _userManager = userManager;
+            _config = config;
+            _constr = _config.GetConnectionString("DefaultConnection");
         }
 
         public async Task ChangeOrderStatus(UpdateOrderStatusModel data)
         {
-            var order = await _db.Orders.FindAsync(data.OrderId);
-            if (order == null)
-            {
-                throw new InvalidOperationException($"order withi id:{data.OrderId} does not found");
-            }
-            order.OrderStatusId = data.OrderStatusId;
-            await _db.SaveChangesAsync();
+            // var order = await _db.Orders.FindAsync(data.OrderId);
+            // if (order == null)
+            // {
+            //     throw new InvalidOperationException($"order withi id:{data.OrderId} does not found");
+            // }
+            // order.OrderStatusId = data.OrderStatusId;
+            // await _db.SaveChangesAsync();
+            IDbConnection connection = new SqlConnection(_constr);
+            string sql = @"
+                            IF NOT EXISTS(SELECT 1 FROM [Order] where Id=@OrderId)
+                            BEGIN
+                                RAISERROR('Order with id %d does not exist', 16, 1, @OrderId);
+                                RETURN;
+                            END
+
+                            UPDATE [Order]
+                            SET OrderStatusId=@OrderStatusId
+                            WHERE Id = @OrderId";
+            await connection.ExecuteAsync(sql, new { data.OrderId, data.OrderStatusId });
         }
 
         public async Task<Order?> GetOrderById(int id)
