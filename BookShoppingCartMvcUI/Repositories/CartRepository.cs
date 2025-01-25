@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using System.Data;
+using Dapper;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace BookShoppingCartMvcUI.Repositories
@@ -8,89 +11,50 @@ namespace BookShoppingCartMvcUI.Repositories
         private readonly ApplicationDbContext _db;
         private readonly UserManager<IdentityUser> _userManager;
         private readonly IHttpContextAccessor _httpContextAccessor;
-
+        private readonly IConfiguration _config;
+        private readonly string _constr;
         public CartRepository(ApplicationDbContext db, IHttpContextAccessor httpContextAccessor,
-            UserManager<IdentityUser> userManager)
+            UserManager<IdentityUser> userManager, IConfiguration config)
         {
             _db = db;
             _userManager = userManager;
             _httpContextAccessor = httpContextAccessor;
+            _config = config;
+            _constr = _config.GetConnectionString("DefaultConnection");
         }
-        public async Task<int> AddItem(int bookId, int qty)
+        public async Task<int> AddItem(int bookId, int quantity)
         {
-            string userId = GetUserId();
-            using var transaction = _db.Database.BeginTransaction();
-            try
-            {
-                if (string.IsNullOrEmpty(userId))
-                    throw new UnauthorizedAccessException("user is not logged-in");
-                var cart = await GetCart(userId);
-                if (cart is null)
-                {
-                    cart = new ShoppingCart
-                    {
-                        UserId = userId
-                    };
-                    _db.ShoppingCarts.Add(cart);
-                }
-                _db.SaveChanges();
-                // cart detail section
-                var cartItem = _db.CartDetails
-                                  .FirstOrDefault(a => a.ShoppingCartId == cart.Id && a.BookId == bookId);
-                if (cartItem is not null)
-                {
-                    cartItem.Quantity += qty;
-                }
-                else
-                {
-                    var book = _db.Books.Find(bookId);
-                    cartItem = new CartDetail
-                    {
-                        BookId = bookId,
-                        ShoppingCartId = cart.Id,
-                        Quantity = qty,
-                        UnitPrice = book.Price  // it is a new line after update
-                    };
-                    _db.CartDetails.Add(cartItem);
-                }
-                _db.SaveChanges();
-                transaction.Commit();
-            }
-            catch (Exception ex)
-            {
-            }
-            var cartItemCount = await GetCartItemCount(userId);
+            string userId = GetUserId();  // getting it from http context
+
+            IDbConnection connection = new SqlConnection(_constr);
+
+            var parameters = new DynamicParameters();
+            parameters.Add("@BookId", bookId);
+            parameters.Add("@Quantity", quantity);
+            parameters.Add("@UserId", userId);
+            parameters.Add("@ReturnedValue", dbType: DbType.Int32, direction: ParameterDirection.ReturnValue);
+
+            await connection.ExecuteAsync("AddItemToCart", parameters, commandType: CommandType.StoredProcedure);
+
+            int cartItemCount = parameters.Get<int>("@ReturnedValue");
+
             return cartItemCount;
         }
 
 
         public async Task<int> RemoveItem(int bookId)
         {
-            //using var transaction = _db.Database.BeginTransaction();
             string userId = GetUserId();
-            try
-            {
-                if (string.IsNullOrEmpty(userId))
-                    throw new UnauthorizedAccessException("user is not logged-in");
-                var cart = await GetCart(userId);
-                if (cart is null)
-                    throw new InvalidOperationException("Invalid cart");
-                // cart detail section
-                var cartItem = _db.CartDetails
-                                  .FirstOrDefault(a => a.ShoppingCartId == cart.Id && a.BookId == bookId);
-                if (cartItem is null)
-                    throw new InvalidOperationException("Not items in cart");
-                else if (cartItem.Quantity == 1)
-                    _db.CartDetails.Remove(cartItem);
-                else
-                    cartItem.Quantity = cartItem.Quantity - 1;
-                _db.SaveChanges();
-            }
-            catch (Exception ex)
-            {
+            IDbConnection connection = new SqlConnection(_constr);
 
-            }
-            var cartItemCount = await GetCartItemCount(userId);
+            var parameters = new DynamicParameters();
+            parameters.Add("@UserId", userId);
+            parameters.Add("@BookId", bookId);
+            parameters.Add("@CartItemCount", dbType: DbType.Int32, direction: ParameterDirection.ReturnValue);
+
+            await connection.ExecuteAsync("RemoveCartItem", parameters, commandType: CommandType.StoredProcedure);
+
+            int cartItemCount = parameters.Get<int>("@CartItemCount");
             return cartItemCount;
         }
 
@@ -125,7 +89,7 @@ namespace BookShoppingCartMvcUI.Repositories
             var data = await (from cart in _db.ShoppingCarts
                               join cartDetail in _db.CartDetails
                               on cart.Id equals cartDetail.ShoppingCartId
-                              where cart.UserId==userId // updated line
+                              where cart.UserId == userId // updated line
                               select new { cartDetail.Id }
                         ).ToListAsync();
             return data.Count;
@@ -155,17 +119,17 @@ namespace BookShoppingCartMvcUI.Repositories
                 {
                     UserId = userId,
                     CreateDate = DateTime.UtcNow,
-                    Name=model.Name,
-                    Email=model.Email,
-                    MobileNumber=model.MobileNumber,
-                    PaymentMethod=model.PaymentMethod,
-                    Address=model.Address,
-                    IsPaid=false,
+                    Name = model.Name,
+                    Email = model.Email,
+                    MobileNumber = model.MobileNumber,
+                    PaymentMethod = model.PaymentMethod,
+                    Address = model.Address,
+                    IsPaid = false,
                     OrderStatusId = pendingRecord.Id
                 };
                 _db.Orders.Add(order);
                 _db.SaveChanges();
-                foreach(var item in cartDetail)
+                foreach (var item in cartDetail)
                 {
                     var orderDetail = new OrderDetail
                     {

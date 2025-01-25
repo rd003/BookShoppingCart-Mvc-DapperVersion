@@ -104,3 +104,157 @@ INSERT [dbo].[OrderStatus] ([Id], [StatusId], [StatusName]) VALUES (6, 6, N'Refu
 GO
 SET IDENTITY_INSERT [dbo].[OrderStatus] OFF
 GO
+
+-- Stored procedures
+
+USE [BookShoppingCartMvc_Dapper]
+GO
+
+
+CREATE OR ALTER  PROCEDURE [dbo].[AddItemToCart]
+ @BookId INT,
+ @Quantity INT,
+ @UserId NVARCHAR(450)
+AS
+BEGIN
+  BEGIN TRANSACTION;
+
+  BEGIN TRY
+    IF @UserId is null or @UserId = ''
+	BEGIN
+	  RAISERROR('User is not logged in', 16, 1);
+      RETURN -1;
+	END
+
+   DECLARE @CartId INT;
+
+   SELECT @CartId = Id
+   FROM ShoppingCart
+   WHERE UserId = @UserId;
+
+   IF @CartId IS NULL
+   begin
+      INSERT INTO ShoppingCart(UserId,IsDeleted)
+	  VALUES (@UserId,0);
+
+	  SET @CartId = SCOPE_IDENTITY();
+   end
+
+   -- Check if item already exists in cart
+   DECLARE @ExistingCartDetailId INT;
+   DECLARE @ExistingQuantity INT;
+   
+   SELECT 
+     @ExistingCartDetailId = Id,
+	 @ExistingQuantity = Quantity
+   FROM CartDetail
+   where ShoppingCartId=@CartId and BookId=@BookId
+
+   -- Get book price for new cart items
+   DECLARE @UnitPrice DECIMAL(18,2);
+
+   SELECT @UnitPrice = Price 
+   FROM Book 
+   WHERE Id = @BookId;
+
+   -- Update existing cart item or insert new
+
+   if @ExistingCartDetailId is not null
+   begin
+     UPDATE CartDetail
+	 set Quantity = Quantity+1
+	 Where Id= @ExistingCartDetailId;
+   end
+   else
+   begin
+     INSERT INTO CartDetail (ShoppingCartId, BookId, Quantity, UnitPrice)
+	 VALUES (@CartId, @BookId, @Quantity, @UnitPrice);
+   end
+
+    -- Get total cart item count for return
+    DECLARE @CartItemCount INT;
+
+	SELECT
+	 @CartItemCount=Count(1)
+	FROM CartDetail
+	Where ShoppingCartId=@CartId
+
+	COMMIT TRANSACTION;
+
+	RETURN @CartItemCount;
+  END TRY
+  BEGIN CATCH
+    IF @@TRANCOUNT>0
+	   ROLLBACK TRANSACTION;
+    THROW; 
+  END CATCH
+
+end
+GO
+
+create or alter procedure RemoveCartItem
+  @UserId nvarchar(100),
+  @BookId int
+as
+begin
+ -- Ensure @UserId is not null  
+ if (@UserId is null or @UserId = '')
+ begin
+  raiserror('@UserId is null',16,1); 
+ end
+
+ -- check whether a user has cart or not
+
+ declare @CartId INT;
+
+ select 
+  @CartId=s.Id
+ from ShoppingCart s
+ where s.UserId = @UserId;
+
+ if @CartId is null
+ begin
+   raiserror('Invalid cart',16,1);
+ end
+
+ declare @CartItemQuantity int;
+ declare @CartDetailId int;
+
+ select 
+  @CartDetailId = cd.Id,
+  @CartItemQuantity = cd.Quantity
+ from CartDetail cd
+ where cd.ShoppingCartId=@CartId and cd.BookId=@BookId;
+
+ if @CartItemQuantity is null
+ begin
+  raiserror('No items in cart',16,1);
+ end
+
+ else if(@CartItemQuantity = 1)
+ begin
+   delete from CartDetail 
+   where Id=@CartDetailId;
+ end
+
+ else
+ begin
+   update CartDetail
+   set Quantity  = Quantity - 1
+   where Id=@CartDetailId;
+ end
+
+ -- return the cart items
+
+ declare @CartItemCount int;
+
+ select
+  @CartItemCount = Count(1)
+ from CartDetail cd
+ where cd.ShoppingCartId= @CartId;
+
+ return @CartItemCount;
+
+end
+go
+
