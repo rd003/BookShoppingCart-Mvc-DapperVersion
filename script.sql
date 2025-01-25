@@ -258,3 +258,105 @@ begin
 end
 go
 
+-- checkout script
+CREATE OR ALTER PROCEDURE Checkout
+  @Name NVARCHAR(30),
+  @Email NVARCHAR(30),
+  @MobileNumber NVARCHAR(15),
+  @Address NVARCHAR(200),
+  @PaymentMethod NVARCHAR(20),
+  @UserId NVARCHAR(200)
+AS
+BEGIN
+  SET NOCOUNT ON;
+
+  -- Input validation (existing checks)
+  IF (@Name IS NULL OR @Name = '')
+    THROW 50001, 'Name cannot be null', 1;
+  
+  IF (@Email IS NULL OR @Email = '')
+    THROW 50002, 'Email cannot be null', 1;
+  
+  IF (@MobileNumber IS NULL OR @MobileNumber = '')
+    THROW 50003, 'Mobile Number cannot be null', 1;
+  
+  IF (@Address IS NULL OR @Address = '')
+    THROW 50004, 'Address cannot be null', 1;
+  
+  IF (@PaymentMethod IS NULL OR @PaymentMethod = '')
+    THROW 50005, 'Payment Method cannot be null', 1;
+  
+  IF (@UserId IS NULL OR @UserId = '')
+    THROW 50006, 'User ID cannot be null', 1;
+
+  BEGIN TRY
+    BEGIN TRANSACTION;
+
+    -- Get Cart Information
+    DECLARE @CartId INT;
+    SELECT @CartId = Id 
+    FROM ShoppingCart 
+    WHERE UserId = @UserId;
+
+    IF @CartId IS NULL
+      THROW 50007, 'Invalid cart', 1;
+
+    IF NOT EXISTS (SELECT 1 FROM CartDetail WHERE ShoppingCartId = @CartId)
+      THROW 50008, 'Cart is empty', 1;
+
+    -- Check Stock Availability
+    IF EXISTS (
+      SELECT 1 
+      FROM CartDetail cd
+      INNER JOIN Stock s ON cd.BookId = s.BookId
+      WHERE cd.ShoppingCartId = @CartId AND cd.Quantity > s.Quantity
+    )
+      THROW 50009, 'Insufficient stock for one or more items', 1;
+
+    -- Get Pending Order Status
+    DECLARE @PendingOrderStatusId INT;
+    SELECT @PendingOrderStatusId = Id 
+    FROM OrderStatus 
+    WHERE StatusName = 'Pending';
+
+    IF @PendingOrderStatusId IS NULL
+      THROW 50010, 'No ''Pending'' order status found', 1;
+
+    -- Create Order
+    INSERT INTO [Order]
+    (CreateDate, [Address], Email, IsDeleted, IsPaid, MobileNumber, [Name], OrderStatusId, PaymentMethod, UserId)
+    VALUES 
+    (CURRENT_TIMESTAMP, @Address, @Email, 0, 0, @Name, @MobileNumber, @PendingOrderStatusId, @PaymentMethod, @UserId);
+
+    DECLARE @CreatedOrderId INT = SCOPE_IDENTITY();
+
+    -- Create Order Details
+    INSERT INTO OrderDetail
+    (BookId, OrderId, Quantity, UnitPrice)
+    SELECT 
+      cd.BookId,
+      @CreatedOrderId,
+      cd.Quantity,
+      cd.UnitPrice
+    FROM CartDetail cd
+    WHERE cd.ShoppingCartId = @CartId;
+
+    -- Update Stock 
+    UPDATE Stock
+    SET Quantity = Stock.Quantity - OrderDetail.Quantity
+    FROM Stock
+    INNER JOIN OrderDetail ON Stock.BookId = OrderDetail.BookId
+    WHERE OrderDetail.OrderId = @CreatedOrderId;
+
+    -- Remove Cart Items
+    DELETE FROM CartDetail 
+    WHERE ShoppingCartId = @CartId;
+
+    COMMIT TRANSACTION;
+  END TRY
+  BEGIN CATCH
+    IF @@TRANCOUNT > 0
+      ROLLBACK TRANSACTION;
+    THROW;
+  END CATCH
+END

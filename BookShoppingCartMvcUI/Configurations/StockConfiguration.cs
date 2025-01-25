@@ -8,7 +8,7 @@ public class StockConfiguration : IEntityTypeConfiguration<Stock>
 {
        public void Configure(EntityTypeBuilder<Stock> builder)
        {
-              builder.ToTable("Stock")
+              builder.ToTable("Stock", b => b.HasCheckConstraint("CK_Stock_Quantity", "Quantity>=0"))
                      .HasKey(k => k.Id)
                      .HasName("PK_Stock_Id");
 

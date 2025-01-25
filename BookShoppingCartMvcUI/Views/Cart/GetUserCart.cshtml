@@ -1,4 +1,4 @@
-﻿@model ShoppingCart
+﻿@model ShoppingCartDto
 @{
     ViewData["Title"] = "GetUserCart";
 }
@@ -33,10 +33,10 @@
                     </td>
                     <td>@item.Book.Genre.GenreName</td>
                     <td>@item.Book.Price X @item.Quantity</td>
-                    <td>@(item.Book.Price * item.Quantity)</td>
+                    <td>@item.TotalPrice</td>
                     <td>
                         @* Increase Quantity button should be invisible if not enough stock*@
-                        @if (item.Quantity < item.Book.Stock.Quantity)
+                        @if (item.Quantity < item.Book.Stock.StockQuantity)
                         {
                             <a class="btn btn-info" href="/Cart/AddItem?bookId=@item.BookId&&redirect=1">+</a>
                         }
@@ -53,7 +53,7 @@
 
         <div class="my-2">
             <h5>Total(INR): </h5>
-            @(Model.CartDetails.Select(item => item.Book.Price * item.Quantity).Sum())
+            @(Model.TotalPrice)
         </div>
 
         <div class="my-2">
