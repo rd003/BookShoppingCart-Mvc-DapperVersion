@@ -25,7 +25,7 @@ public class BookRepository : IBookRepository
 
     public async Task AddBook(Book book)
     {
-        IDbConnection connection = new SqlConnection(_constr);
+        using IDbConnection connection = new SqlConnection(_constr);
         string sql = @"
                 insert into
                 Book (BookName,AuthorName,Price,Image,GenreId)
@@ -36,7 +36,7 @@ public class BookRepository : IBookRepository
 
     public async Task UpdateBook(Book book)
     {
-        IDbConnection connection = new SqlConnection(_constr);
+        using IDbConnection connection = new SqlConnection(_constr);
         string sql = @"
                update Book
                set 
@@ -52,7 +52,7 @@ public class BookRepository : IBookRepository
 
     public async Task DeleteBook(Book book)
     {
-        IDbConnection connection = new SqlConnection(_constr);
+        using IDbConnection connection = new SqlConnection(_constr);
         string sql = @"
                 delete from 
                 Book
@@ -63,7 +63,7 @@ public class BookRepository : IBookRepository
 
     public async Task<Book?> GetBookById(int id)
     {
-        IDbConnection connection = new SqlConnection(_constr);
+        using IDbConnection connection = new SqlConnection(_constr);
         string sql = @"
              select
                b.Id,
@@ -85,7 +85,7 @@ public class BookRepository : IBookRepository
 
     public async Task<IEnumerable<Book>> GetBooks()
     {
-        IDbConnection connection = new SqlConnection(_constr);
+        using IDbConnection connection = new SqlConnection(_constr);
         string sql = @"
              select
                b.Id,

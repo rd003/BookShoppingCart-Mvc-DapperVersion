@@ -23,14 +23,11 @@ namespace BookShoppingCartMvcUI.Repositories
         }
 
 
-        private IDbConnection CreateConnection() =>
-        new SqlConnection(_constr);
-
         public async Task<int> AddItem(int bookId, int quantity)
         {
             string userId = GetUserId();  // getting it from http context
 
-            IDbConnection connection = new SqlConnection(_constr);
+            using IDbConnection connection = new SqlConnection(_constr);
 
             var parameters = new DynamicParameters();
             parameters.Add("@BookId", bookId);
@@ -49,7 +46,7 @@ namespace BookShoppingCartMvcUI.Repositories
         public async Task<int> RemoveItem(int bookId)
         {
             string userId = GetUserId();
-            IDbConnection connection = new SqlConnection(_constr);
+            using IDbConnection connection = new SqlConnection(_constr);
 
             var parameters = new DynamicParameters();
             parameters.Add("@UserId", userId);
@@ -68,7 +65,7 @@ namespace BookShoppingCartMvcUI.Repositories
             if (userId == null)
                 throw new InvalidOperationException("Invalid userid");
 
-            IDbConnection connection = new SqlConnection(_constr);
+            using IDbConnection connection = new SqlConnection(_constr);
             string query = @"
         SELECT 
             sc.Id as Id, 
@@ -119,7 +116,7 @@ namespace BookShoppingCartMvcUI.Repositories
 
         public async Task<ShoppingCart> GetCart(string userId)
         {
-            IDbConnection connection = new SqlConnection(_constr);
+            using IDbConnection connection = new SqlConnection(_constr);
             string sql = @"select * from ShoppingCart where UserId = @userId ";
             var cart = await connection.QueryFirstAsync<ShoppingCart>(sql, new { userId });
             return cart;
@@ -129,7 +126,7 @@ namespace BookShoppingCartMvcUI.Repositories
         {
             userId = GetUserId();
 
-            IDbConnection connection = new SqlConnection(_constr);
+            using IDbConnection connection = new SqlConnection(_constr);
             string sql = @"select 
                             Count(1) as TotalCount
                            from ShoppingCart s
@@ -144,7 +141,7 @@ namespace BookShoppingCartMvcUI.Repositories
         public async Task DoCheckout(CheckoutModel model)
         {
             model.UserId = GetUserId();
-            IDbConnection connection = new SqlConnection(_constr);
+            using IDbConnection connection = new SqlConnection(_constr);
             await connection.ExecuteAsync("Checkout", param: model, commandType: CommandType.StoredProcedure);
         }
 

@@ -19,7 +19,7 @@ public class ReportRepository : IReportRepository
 
     public async Task<IEnumerable<TopNSoldBookModel>> GetTopNSellingBooksByDate(DateTime startDate, DateTime endDate, int n = 5)
     {
-        IDbConnection connection = new SqlConnection(_constr);
+        using IDbConnection connection = new SqlConnection(_constr);
         string @sql = @"
                     SET NOCOUNT ON;
 

@@ -30,14 +30,7 @@ namespace BookShoppingCartMvcUI.Repositories
 
         public async Task ChangeOrderStatus(UpdateOrderStatusModel data)
         {
-            // var order = await _db.Orders.FindAsync(data.OrderId);
-            // if (order == null)
-            // {
-            //     throw new InvalidOperationException($"order withi id:{data.OrderId} does not found");
-            // }
-            // order.OrderStatusId = data.OrderStatusId;
-            // await _db.SaveChangesAsync();
-            IDbConnection connection = new SqlConnection(_constr);
+            using IDbConnection connection = new SqlConnection(_constr);
             string sql = @"
                             IF NOT EXISTS(SELECT 1 FROM [Order] where Id=@OrderId)
                             BEGIN

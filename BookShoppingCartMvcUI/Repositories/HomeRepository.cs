@@ -10,6 +10,7 @@ public class HomeRepository : IHomeRepository
     private readonly IConfiguration _config;
     private readonly string constr;
 
+
     public HomeRepository(IConfiguration config)
     {
         _config = config;
@@ -20,7 +21,7 @@ public class HomeRepository : IHomeRepository
     {
         sTerm = sTerm.ToLower();
 
-        IDbConnection conn = new SqlConnection(constr);
+        using IDbConnection conn = new SqlConnection(constr);
 
         string sql = @"SELECT
                             b.Id,

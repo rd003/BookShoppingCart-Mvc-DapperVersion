@@ -26,7 +26,7 @@ public class GenreRepository : IGenreRepository
 
     public async Task AddGenre(Genre genre)
     {
-        IDbConnection connection = new SqlConnection(_connectionString);
+        using IDbConnection connection = new SqlConnection(_connectionString);
         string query = @"
             INSERT INTO Genre (GenreName)
             VALUES (@GenreName);
@@ -35,7 +35,7 @@ public class GenreRepository : IGenreRepository
     }
     public async Task UpdateGenre(Genre genre)
     {
-        IDbConnection connection = new SqlConnection(_connectionString);
+        using IDbConnection connection = new SqlConnection(_connectionString);
         string query = @"
           UPDATE Genre 
           SET GenreName= @GenreName
@@ -46,7 +46,7 @@ public class GenreRepository : IGenreRepository
 
     public async Task DeleteGenre(Genre genre)
     {
-        IDbConnection connection = new SqlConnection(_connectionString);
+        using IDbConnection connection = new SqlConnection(_connectionString);
         string query = @"
          DELETE FROM Genre
          WHERE Id = @Id;
@@ -56,7 +56,7 @@ public class GenreRepository : IGenreRepository
 
     public async Task<Genre?> GetGenreById(int id)
     {
-        IDbConnection connection = new SqlConnection(_connectionString);
+        using IDbConnection connection = new SqlConnection(_connectionString);
         string query = @"
           select
            g.Id,
@@ -71,7 +71,7 @@ public class GenreRepository : IGenreRepository
 
     public async Task<IEnumerable<Genre>> GetGenres()
     {
-        IDbConnection connection = new SqlConnection(_connectionString);
+        using IDbConnection connection = new SqlConnection(_connectionString);
         string query = @"
             select 
               g.Id,

@@ -18,7 +18,7 @@ namespace BookShoppingCartMvcUI.Repositories
 
         public async Task<Stock?> GetStockByBookId(int bookId)
         {
-            IDbConnection connection = new SqlConnection(_constr);
+            using IDbConnection connection = new SqlConnection(_constr);
             string sql = @"
                            SELECT 
                             s.Id,
@@ -45,7 +45,7 @@ namespace BookShoppingCartMvcUI.Repositories
                          on b.Id=s.BookId
                          WHERE @sTerm = '' or b.BookName LIKE @sTerm+'%';
             ";
-            IDbConnection connection = new SqlConnection(_constr);
+            using IDbConnection connection = new SqlConnection(_constr);
             var stocks = await connection.QueryAsync<StockDisplayModel>(sql, new { sTerm });
             return stocks;
         }
@@ -54,7 +54,7 @@ namespace BookShoppingCartMvcUI.Repositories
         {
             // if there is no stock for given book id, then add new record
             // if there is already stock for given book id, update stock's quantity
-            IDbConnection connection = new SqlConnection(_constr);
+            using IDbConnection connection = new SqlConnection(_constr);
             string sql = @"
                          IF NOT EXISTS (SELECT 1 FROM Stock Where BookID = @BookId)
                           BEGIN
