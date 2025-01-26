@@ -360,3 +360,36 @@ BEGIN
     THROW;
   END CATCH
 END
+
+-- get books for home page
+
+create or alter  procedure [dbo].[USP_GetBooksForHomePage]
+  @search_term nvarchar(30)='',
+  @genre_id int = 0
+as
+begin
+
+ set @search_term = case when @search_term='' then 'show_all' else @search_term end;
+
+ SELECT
+  b.Id,
+  b.[Image],
+  b.AuthorName,
+  b.BookName,
+  b.GenreId,
+  b.Price,
+  g.GenreName,
+  COALESCE(s.Quantity,0) as Quantity
+ FROM Book b
+ inner join Genre g
+ on b.GenreId = g.Id
+ left outer join Stock s
+ on b.Id = s.BookId
+ Where 
+ (@search_term='show_all' OR CONTAINS(b.BookName,@search_term))
+ AND (@genre_id = 0 OR b.GenreId = @genre_id) 
+ ORDER BY b.BookName ASC;
+end
+GO
+
+
