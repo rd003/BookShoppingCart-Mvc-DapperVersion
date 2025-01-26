@@ -36,7 +36,7 @@ public class HomeRepository : IHomeRepository
                             inner join Genre g
                             on b.GenreId = g.Id
                             left outer join Stock s
-                            on b.Id = s.Id
+                            on b.Id = s.BookId
                         Where 
                             (@search_term = '' OR b.BookName LIKE @search_term + '%')
                             AND (@genre_id = 0 OR b.GenreId = @genre_id) 

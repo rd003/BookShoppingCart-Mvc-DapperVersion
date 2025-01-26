@@ -45,7 +45,7 @@ public class ReportRepository : IReportRepository
                     from UnitSold us
                     join [Book] b
                     on us.BookId = b.Id
-                    order by us.TotalUnitSold desc
+                    order by us.TotalUnitSold desc;
         ";
         var topFiveSoldBooks = await connection.QueryAsync<TopNSoldBookModel>(sql, new
         {
