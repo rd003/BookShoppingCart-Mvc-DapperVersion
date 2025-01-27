@@ -26,6 +26,8 @@ builder.Services.AddTransient<IFileService, FileService>();
 builder.Services.AddTransient<IBookRepository, BookRepository>();
 builder.Services.AddTransient<IReportRepository, ReportRepository>();
 
+//builder.Services.AddMemoryCache();
+
 var app = builder.Build();
 // Uncomment it when you run the project first time, It will registered an admin
 using (var scope = app.Services.CreateScope())

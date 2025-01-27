@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using System.Diagnostics;
 
 namespace BookShoppingCartMvcUI.Controllers;
@@ -9,25 +10,38 @@ public class HomeController : Controller
     private readonly IHomeRepository _homeRepository;
     private readonly IGenreRepository _genreRepo;
 
-    public HomeController(ILogger<HomeController> logger, IHomeRepository homeRepository, IGenreRepository genreRepo)
+    private readonly IMemoryCache _memoryCache;
+
+    public HomeController(ILogger<HomeController> logger, IHomeRepository homeRepository, IGenreRepository genreRepo, IMemoryCache memoryCache)
     {
         _homeRepository = homeRepository;
         _logger = logger;
         _genreRepo = genreRepo;
+        _memoryCache = memoryCache;
     }
 
     public async Task<IActionResult> Index(string sterm = "", int genreId = 0)
     {
-        IEnumerable<Book> books = await _homeRepository.GetBooks(sterm, genreId);
-        IEnumerable<Genre> genres = await _genreRepo.GetGenres();
+        string cacheKey = $"book-{sterm}-{genreId}";
 
-        BookDisplayModel bookModel = new()
+        if (!_memoryCache.TryGetValue(cacheKey, out BookDisplayModel bookModel))
         {
-            Books = books,
-            Genres = genres,
-            STerm = sterm,
-            GenreId = genreId
-        };
+
+            IEnumerable<Book> books = await _homeRepository.GetBooks(sterm, genreId);
+            IEnumerable<Genre> genres = await _genreRepo.GetGenres();
+
+            bookModel = new()
+            {
+                Books = books,
+                Genres = genres,
+                STerm = sterm,
+                GenreId = genreId
+            };
+
+            var cacheOptions = new MemoryCacheEntryOptions()
+               .SetSlidingExpiration(TimeSpan.FromMinutes(10));
+            _memoryCache.Set(cacheKey, bookModel, cacheOptions);
+        }
         return View(bookModel);
     }
 
